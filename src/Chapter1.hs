@@ -491,8 +491,10 @@ Implement a function that returns the last digit of a given number.
 -}
 -- DON'T FORGET TO SPECIFY THE TYPE IN HERE
 lastDigit :: Int -> Int
-lastDigit n = mod n 10
-
+lastDigit n
+  | n >=0 = mod n 10
+  | (mod n 10) == 0 = 0
+  | otherwise = 10 - (mod n 10)
 
 {- |
 =⚔️= Task 6
@@ -640,11 +642,14 @@ specifying complex expressions.
 -}
 
 sumLast2 :: Int -> Int
-sumLast2 n = uncurry (+) (split last2)
+sumLast2 n = uncurry (+) (split n)
   where
-    last2 = mod n 100
     split :: Int -> (Int, Int)
-    split n = (div n 10, mod n 10)
+    split n 
+      | n >= 0 =  (mod (div n 10) 10, mod n 10)
+      | mod n 100 == 0 = (0, lastDigit (div n 10))
+      | mod n 10 == 0 = (lastDigit (div n 10), 0)
+      | otherwise = (lastDigit ((div n 10) + 1), lastDigit n)
 
 
 {- |
