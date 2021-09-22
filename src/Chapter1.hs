@@ -209,7 +209,7 @@ So, the output in this example means that 'False' has type 'Bool'.
 > Try to guess first and then compare your expectations with GHCi output
 
 >>> :t True
-False :: Bool
+True :: Bool
 >>> :t 'a'
 'a' :: Char
 >>> :t 42
