@@ -670,8 +670,10 @@ You need to use recursion in this task. Feel free to return to it later, if you
 aren't ready for this boss yet!
 -}
 
+firstDigit :: Int -> Int
 firstDigit n 
-  | n < 10 = n
+  | n < 10  && n >= 0 = n
+  | n < 0 = firstDigit (-n)
   | otherwise = firstDigit (div n 10)
 
 
