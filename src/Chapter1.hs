@@ -80,7 +80,7 @@ language syntax constructions (if-then-else, let-in, case-of, etc.) and various
 functions (addition — (+), division — div, maximum — max, sorting — sort,
 sortBy, sortOn, etc.) and variables. Functions are also expressions as well as
 variables.
-s
+
 If an expression is a combination of other values and expressions, it can be
 __evaluated__ (or reduced) to a primitive value. The evaluation process is not
 immediate, since Haskell is a __lazy language__ and it won't evaluate
