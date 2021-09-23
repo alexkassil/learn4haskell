@@ -491,10 +491,7 @@ Implement a function that returns the last digit of a given number.
 -}
 -- DON'T FORGET TO SPECIFY THE TYPE IN HERE
 lastDigit :: Int -> Int
-lastDigit n
-  | n >=0 = mod n 10
-  | (mod n 10) == 0 = 0
-  | otherwise = 10 - (mod n 10)
+lastDigit n = mod (abs n) 10
 
 {- |
 =⚔️= Task 6
@@ -561,6 +558,7 @@ mid x y z
   | (x <= y && y <= z) || (z <= y && y <= x) = y
   | (y <= x && x <= z) || (z <= x && x <= y) = x
   | (x <= z && z <= y) || (y <= z && z <= x) = z
+  | otherwise = z
 
 {- |
 =⚔️= Task 8
@@ -575,9 +573,7 @@ True
 False
 -}
 isVowel :: Char -> Bool
-isVowel c
-  | c == 'a' || c == 'e' || c == 'i' || c == 'o' || c == 'u' = True
-  | otherwise = False
+isVowel c = c == 'a' || c == 'e' || c == 'i' || c == 'o' || c == 'u'
 
 
 {- |
@@ -642,15 +638,11 @@ specifying complex expressions.
 -}
 
 sumLast2 :: Int -> Int
-sumLast2 n = uncurry (+) (split n)
+sumLast2 n = uncurry (+) (split last2)
   where
+    last2 = mod (abs n) 100
     split :: Int -> (Int, Int)
-    split n 
-      | n >= 0 =  (mod (div n 10) 10, mod n 10)
-      | mod n 100 == 0 = (0, lastDigit (div n 10))
-      | mod n 10 == 0 = (lastDigit (div n 10), 0)
-      | otherwise = (lastDigit ((div n 10) + 1), lastDigit n)
-
+    split m = divMod m 10
 
 {- |
 =💣= Task 10*
