@@ -336,11 +336,9 @@ from it!
 ghci> :l src/Chapter2.hs
 -}
 subList :: Int -> Int -> [a] -> [a]
-subList _ ____ [] = []
-subList start end (x:xs)
-  | start > end || start < 0 = []
-  | start == 0 = x : (subList 0 (end - 1) xs)
-  | otherwise = subList (start - 1) (end - 1) xs
+subList start end list
+  | start > end || start < 0 || null list = []
+  | otherwise = take (end - start + 1) (drop start list)
 
 {- |
 =⚔️= Task 4
@@ -506,9 +504,8 @@ True
 False
 -}
 
--- Why does "isThird42 :: Num a => [a] -> Bool" not work??
-isThird42 :: [Int] -> Bool 
-isThird42 (_:_:x:_) = x == 42
+isThird42 :: (Eq a, Num a) => [a] -> Bool 
+isThird42 (_:_:42:_) = True
 isThird42 _ = False
 
 
