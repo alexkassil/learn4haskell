@@ -344,7 +344,20 @@ of a book, but you are not limited only by the book properties we described.
 Create your own book type of your dreams!
 -}
 
-{- |
+data Book = MkBook
+  { bookTitle  :: String,
+    bookAuthor :: String,
+    bookPages  :: Int
+  } deriving (Show)
+
+hp1 :: Book
+hp1 = MkBook
+    { bookTitle = "Harry Potter and the Sorceror's Stone",
+      bookAuthor = "J.K. Rowling",
+      bookPages = 512
+    }
+ 
+{- |      
 =⚔️= Task 2
 
 Prepare to defend the honour of our kingdom! A monster attacks our brave knight.
