@@ -737,7 +737,7 @@ value of the element itself
 🕯 HINT: Use combination of 'map' and 'replicate'
 -}
 smartReplicate :: [Int] -> [Int]
-smartReplicate = concat . (map (\x -> replicate x x))
+smartReplicate = concatMap (\x -> replicate x x)
 
 {- |
 =⚔️= Task 9
@@ -856,7 +856,7 @@ list.
 rotate :: Int -> [a] -> [a]
 rotate n list
   | n < 0 = []
-  | otherwise = (take (length list)) (drop n (cycle list))
+  | otherwise = (take (length list)) (drop (mod n (length list)) (cycle list))
 
 {- |
 =💣= Task 12*
@@ -873,9 +873,11 @@ and reverses it.
   cheating!
 -}
 rewind :: [a] -> [a]
-rewind [] = []
-rewind (x:xs) = (rewind xs) ++ [x]
-
+rewind list = go [] list
+  where
+    go :: [a] -> [a] -> [a]
+    go acc [] = acc
+    go acc (x:xs) = go (x:acc) xs
 
 {-
 You did it! Now it is time to open pull request with your changes
