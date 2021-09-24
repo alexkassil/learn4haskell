@@ -385,6 +385,12 @@ after the fight. The battle has the following possible outcomes:
  ⊛ Neither the knight nor the monster wins. On such an occasion, the knight
    doesn't earn any money and keeps what they had before.
 
+>>> fight (MkMonster 10 10 10) (MkKnight 10 10 5)
+15
+>>> fight (MkMonster 10 10 10) (MkKnight 10 9 5)
+-1
+>>> fight (MkMonster 10 10 10) (MkKnight 11 9 5)
+5
 -}
 
 data Knight = MkKnight
@@ -490,6 +496,8 @@ Create a simple enumeration for the meal types (e.g. breakfast). The one who
 comes up with the most number of names wins the challenge. Use your creativity!
 -}
 
+data Breakfast = HalfACupOfColdOats
+
 {- |
 =⚔️= Task 4
 
@@ -508,8 +516,113 @@ After defining the city, implement the following functions:
  ✦ buildWalls — build walls in the city. But since building walls is a
    complicated task, walls can be built only if the city has a castle
    and at least 10 living __people__ inside in all houses of the city in total.
+
+TDD all the waaaay  
+>>> c = CastleCity (MkCastleCity (Castle "Mount Doom") Church [])
+>>> c
+CastleCity (MkCastleCity {castleCityCastle = Castle {castleName = "Mount Doom"}, castleCityChurchOrLibrary = Church, castleCityHouse = []})
+>>> CastleCity (getCastleCity c) {castleCityChurchOrLibrary = Library}
+CastleCity (MkCastleCity {castleCityCastle = Castle {castleName = "Mount Doom"}, castleCityChurchOrLibrary = Library, castleCityHouse = []})
+>>> buildCastle c (Castle "Hill Doom")
+CastleCity (MkCastleCity {castleCityCastle = Castle {castleName = "Hill Doom"}, castleCityChurchOrLibrary = Church, castleCityHouse = []})
+>>> buildCastle (BasicCity (MkBasicCity Church [])) (Castle "Hill Doom")
+CastleCity (MkCastleCity {castleCityCastle = Castle {castleName = "Hill Doom"}, castleCityChurchOrLibrary = Church, castleCityHouse = []})
+>>> d = buildHouse c (House P4)
+>>> d
+CastleCity (MkCastleCity {castleCityCastle = Castle {castleName = "Mount Doom"}, castleCityChurchOrLibrary = Church, castleCityHouse = [House {housePeople = P4}]})
+>>> e = buildHouse d (House P3)
+>>> e
+CastleCity (MkCastleCity {castleCityCastle = Castle {castleName = "Mount Doom"}, castleCityChurchOrLibrary = Church, castleCityHouse = [House {housePeople = P3},House {housePeople = P4}]})
+>>> countPeople []
+0
+>>> countPeople [House P1]
+1
+>>> countPeople [House P1, House P2]
+3
+>>> buildWalls e
+CastleCity (MkCastleCity {castleCityCastle = Castle {castleName = "Mount Doom"}, castleCityChurchOrLibrary = Church, castleCityHouse = [House {housePeople = P3},House {housePeople = P4}]})
+>>> f = buildHouse e (House P3)
+>>> g = buildWalls f
+>>> g
+CastleWalledCity (MkCastleWalledCity {castleWalledCityCastle = Castle {castleName = "Mount Doom"}, castleWalledCityChurchOrLibrary = Church, castleWalledCityWall = Wall, castleWalledCityHouse = [House {housePeople = P3},House {housePeople = P3},House {housePeople = P4}]})
+>>> buildWalls g
+CastleWalledCity (MkCastleWalledCity {castleWalledCityCastle = Castle {castleName = "Mount Doom"}, castleWalledCityChurchOrLibrary = Church, castleWalledCityWall = Wall, castleWalledCityHouse = [House {housePeople = P3},House {housePeople = P3},House {housePeople = P4}]})
 -}
 
+
+data City 
+  = CastleCity CastleCity
+  | CastleWalledCity CastleWalledCity
+  | BasicCity BasicCity
+  deriving Show
+
+c = CastleCity (MkCastleCity (Castle "Mount Doom") Church [])
+
+-- I don't love how these have a city input that causes an runtime error - is there a way
+-- to get rid of that and still have a sum type that causes compiletime errors?
+getCastleCity :: City -> CastleCity
+getCastleCity (CastleCity city) = city;
+getCastleCity _ = error "getCastleCity must take city with CastleCity"
+
+getCastleWalledCity :: City -> CastleWalledCity
+getCastleWalledCity (CastleWalledCity city) = city;
+getCastleWalledCity _ = error "getCastleWalledCity must take city with CastleWalledCity"
+
+getBasicCity :: City -> BasicCity
+getBasicCity (BasicCity city) = city;
+getBasicCity _ = error "getBasicCity must take city with BasicCity"
+
+data CastleCity = MkCastleCity
+    { castleCityCastle :: Castle
+    , castleCityChurchOrLibrary :: ChurchOrLibrary
+    , castleCityHouse :: [House]
+    } deriving Show
+
+data CastleWalledCity = MkCastleWalledCity
+    { castleWalledCityCastle :: Castle
+    , castleWalledCityChurchOrLibrary :: ChurchOrLibrary
+    , castleWalledCityWall :: Wall
+    , castleWalledCityHouse :: [House]
+    } deriving Show
+
+data BasicCity = MkBasicCity
+    { basicCityChurchOrLibrary :: ChurchOrLibrary
+    , basicCityHouse :: [House]
+    } deriving Show
+
+data Castle = Castle {castleName :: String} deriving Show
+data ChurchOrLibrary = Church | Library deriving Show
+data OneToFour = P1 | P2 | P3 | P4 deriving Show
+data House = House {housePeople :: OneToFour} deriving Show
+data Wall = Wall deriving Show
+
+buildCastle :: City -> Castle -> City
+buildCastle city castle = case city of
+  CastleCity city       -> CastleCity city {castleCityCastle = castle}
+  CastleWalledCity city -> CastleWalledCity city {castleWalledCityCastle = castle}
+  BasicCity city        -> CastleCity (MkCastleCity castle (basicCityChurchOrLibrary city) (basicCityHouse city) )
+
+buildHouse :: City -> House -> City
+buildHouse city house = case city of
+  CastleCity city       -> CastleCity city {castleCityHouse = house:(castleCityHouse city)}
+  CastleWalledCity city -> CastleWalledCity city {castleWalledCityHouse = house:(castleWalledCityHouse city)}
+  BasicCity city        -> BasicCity city {basicCityHouse = house:(basicCityHouse city)}
+
+buildWalls :: City -> City
+buildWalls city = case city of
+  CastleWalledCity city -> CastleWalledCity city
+  BasicCity city        -> BasicCity city
+  CastleCity city       -> if countPeople (castleCityHouse city) < 10 then CastleCity city else CastleWalledCity (MkCastleWalledCity (castleCityCastle city) (castleCityChurchOrLibrary city) Wall (castleCityHouse city))
+
+countPeople :: [House] -> Int
+countPeople [] = 0
+countPeople houses = sum (map countPersons houses)
+
+countPersons :: House -> Int
+countPersons (House P1) = 1
+countPersons (House P2) = 2
+countPersons (House P3) = 3
+countPersons (House P4) = 4
 {-
 =🛡= Newtypes
 
