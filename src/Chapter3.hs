@@ -612,6 +612,7 @@ buildWalls :: City -> City
 buildWalls city = case city of
   CastleWalledCity city -> CastleWalledCity city
   BasicCity city        -> BasicCity city
+  -- This felt a little verbose but I couldn't think of a better way to do it
   CastleCity city       -> if countPeople (castleCityHouse city) < 10 then CastleCity city else CastleWalledCity (MkCastleWalledCity (castleCityCastle city) (castleCityChurchOrLibrary city) Wall (castleCityHouse city))
 
 countPeople :: [House] -> Int
