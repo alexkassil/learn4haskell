@@ -705,21 +705,28 @@ introducing extra newtypes.
     implementation of the "hitPlayer" function at all!
 -}
 data Player = Player
-    { playerHealth    :: Int
-    , playerArmor     :: Int
-    , playerAttack    :: Int
-    , playerDexterity :: Int
-    , playerStrength  :: Int
+    { playerHealth    :: Health
+    , playerArmor     :: Armor
+    , playerAttack    :: Attack
+    , playerDexterity :: Dexterity
+    , playerStrength  :: Strength
     }
+newtype Health    = Health    {unHealth    :: Int}
+newtype Armor     = Armor     {unArmor     :: Int}
+newtype Attack    = Attack    {unAttack    :: Int}
+newtype Dexterity = Dexterity {unDexterity :: Int}
+newtype Strength  = Strength  {unStrength  :: Int}
+newtype Damage    = Damage    {unDamage    :: Int}
+newtype Defense   = Defense   {unDefense   :: Int}
 
-calculatePlayerDamage :: Int -> Int -> Int
-calculatePlayerDamage attack strength = attack + strength
+calculatePlayerDamage :: Attack -> Strength -> Damage
+calculatePlayerDamage attack strength = Damage ((unAttack attack) + (unStrength strength))
 
-calculatePlayerDefense :: Int -> Int -> Int
-calculatePlayerDefense armor dexterity = armor * dexterity
+calculatePlayerDefense :: Armor -> Dexterity -> Defense
+calculatePlayerDefense armor dexterity = Defense ((unArmor armor) * (unDexterity dexterity))
 
-calculatePlayerHit :: Int -> Int -> Int -> Int
-calculatePlayerHit damage defense health = health + defense - damage
+calculatePlayerHit :: Damage -> Defense -> Health -> Health
+calculatePlayerHit damage defense health = Health ((unHealth health) + (unDefense defense) - (unDamage damage))
 
 -- The second player hits first player and the new first player is returned
 hitPlayer :: Player -> Player -> Player
@@ -874,6 +881,10 @@ data List a
   the "Cons" constructor. This is done to tell the compiler that "List" and "a"
   should go together as one type.
 -}
+-- My Own List
+data F a
+    = F
+    | G a (F a) deriving Show
 
 {- |
 =⚔️= Task 6
@@ -895,7 +906,24 @@ parametrise data types in places where values can be of any general type.
 
 🕯 HINT: 'Maybe' that some standard types we mentioned above are useful for
   maybe-treasure ;)
+
+>>> Lair (Dragon 1.0) (Just (TreasureChest 100 "f"))
+Lair {lairDragon = Dragon {dragonMagicalPower = 1.0}, lairTreasureChest = Just (TreasureChest {treasureChestGold = 100, treasureChestLoot = "f"})}
+>>> Lair (Dragon 1.0) Nothing
+Lair {lairDragon = Dragon {dragonMagicalPower = 1.0}, lairTreasureChest = Nothing}
 -}
+
+data TreasureChest x = TreasureChest
+    { treasureChestGold :: Int
+    , treasureChestLoot :: x
+    } deriving Show
+
+data Dragon x = Dragon { dragonMagicalPower :: x} deriving Show
+
+data Lair x y = Lair
+  { lairDragon  :: Dragon x
+  , lairTreasureChest :: Maybe (TreasureChest y)
+  } deriving Show
 
 {-
 =🛡= Typeclasses
