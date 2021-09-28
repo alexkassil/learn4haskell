@@ -558,6 +558,7 @@ data City
   | BasicCity BasicCity
   deriving Show
 
+c :: City
 c = CastleCity (MkCastleCity (Castle "Mount Doom") Church [])
 
 -- I don't love how these have a city input that causes an runtime error - is there a way
@@ -599,19 +600,19 @@ data House = House {housePeople :: OneToFour} deriving Show
 data Wall = Wall deriving Show
 
 buildCastle :: City -> Castle -> City
-buildCastle city castle = case city of
+buildCastle c castle = case c of
   CastleCity city       -> CastleCity city {castleCityCastle = castle}
   CastleWalledCity city -> CastleWalledCity city {castleWalledCityCastle = castle}
   BasicCity city        -> CastleCity (MkCastleCity castle (basicCityChurchOrLibrary city) (basicCityHouse city) )
 
 buildHouse :: City -> House -> City
-buildHouse city house = case city of
+buildHouse c house = case c of
   CastleCity city       -> CastleCity city {castleCityHouse = house:(castleCityHouse city)}
   CastleWalledCity city -> CastleWalledCity city {castleWalledCityHouse = house:(castleWalledCityHouse city)}
   BasicCity city        -> BasicCity city {basicCityHouse = house:(basicCityHouse city)}
 
 buildWalls :: City -> City
-buildWalls city = case city of
+buildWalls c = case c of
   CastleWalledCity city -> CastleWalledCity city
   BasicCity city        -> BasicCity city
   -- This felt a little verbose but I couldn't think of a better way to do it
