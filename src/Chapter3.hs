@@ -558,8 +558,8 @@ data City
   | BasicCity BasicCity
   deriving Show
 
-c :: City
-c = CastleCity (MkCastleCity (Castle "Mount Doom") Church [])
+c' :: City
+c' = CastleCity (MkCastleCity (Castle "Mount Doom") Church [])
 
 -- I don't love how these have a city input that causes an runtime error - is there a way
 -- to get rid of that and still have a sum type that causes compiletime errors?
@@ -1215,12 +1215,12 @@ Weak attacking night, but eventually gets his defense stat high enough vs Monste
 >>> let a = Knight 10 2 0 [KnightAttack, KnightHeal 0, KnightSpell 1]
 >>> let b = Monster 10 5 [MonsterAttack, MonsterRunAway]
 >>> fight a b
-(Knight {knightHealth = -3, knightAttack = 2, knightDefense = 2, knightAction = [KnightAttack,KnightHeal 0,KnightSpell 1]},Monster {monsterHealth = 8, monsterAttack = 5, monsterAction = [MonsterRunAway,MonsterAttack]})
+(Knight {knightHealth = -3, knightAttack = 2, knightDefense = 1, knightAction = [KnightSpell 1,KnightAttack,KnightHeal 0]},Monster {monsterHealth = 8, monsterAttack = 5, monsterAction = [MonsterRunAway,MonsterAttack]})
 >>> let c = Knight 11 3 1 [KnightAttack, KnightSpell 1]
 >>> fight c b
-(Knight {knightHealth = 1, knightAttack = 3, knightDefense = 5, knightAction = [KnightSpell 1,KnightAttack]},Monster {monsterHealth = -1, monsterAttack = 5, monsterAction = [MonsterRunAway,MonsterAttack]})
+(Knight {knightHealth = 1, knightAttack = 3, knightDefense = 5, knightAction = [KnightSpell 1,KnightAttack]},Monster {monsterHealth = -1, monsterAttack = 5, monsterAction = [MonsterAttack,MonsterRunAway]})
 >>> fight b b
-(Monster {monsterHealth = -3, monsterAttack = 5, monsterAction = [MonsterRunAway,MonsterAttack]},Monster {monsterHealth = -3, monsterAttack = 5, monsterAction = [MonsterRunAway,MonsterAttack]})
+(Monster {monsterHealth = 2, monsterAttack = 5, monsterAction = [MonsterRunAway,MonsterAttack]},Monster {monsterHealth = -3, monsterAttack = 5, monsterAction = [MonsterAttack,MonsterRunAway]})
 -}
 
 data Knight = Knight
@@ -1248,7 +1248,7 @@ data MonsterAction =
   deriving (Show)
 
 class Fighter a where
-    action :: (Fighter a, Fighter b) => a -> b -> (a, b)
+    action :: (Fighter b) => a -> b -> (a, b)
     changeHealth :: a -> Int -> a
     getHealth :: a -> Int
 
@@ -1274,14 +1274,9 @@ instance Fighter Monster where
 
 
 fight :: (Fighter a, Fighter b, Show a, Show b) => a -> b -> (a, b)
-fight a b = if (getHealth b) <= 0
+fight a b = if (getHealth b) <= 0 || (getHealth a) <= 0
               then (a, b)
             else swap (uncurry fight (swap (action a b)))
-
--- fight :: (Fighter a, Fighter b) => a -> b -> (a, b)
-
--- data 
-
 {-
 You did it! Now it is time to open pull request with your changes
 and summon @vrom911 and @chshersh for the review!
