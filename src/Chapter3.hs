@@ -1,3 +1,4 @@
+{-# LANGUAGE ConstrainedClassMethods #-}
 {- 👋 Welcome to Chapter Three of our journey, Courageous Knight!
 
 Glad to see you back for more challenges. You fought great for the glory of the
@@ -385,31 +386,31 @@ after the fight. The battle has the following possible outcomes:
  ⊛ Neither the knight nor the monster wins. On such an occasion, the knight
    doesn't earn any money and keeps what they had before.
 
->>> fight (MkMonster 10 10 10) (MkKnight 10 10 5)
+>>> fightOld (MkMonster 10 10 10) (MkKnight 10 10 5)
 15
->>> fight (MkMonster 10 10 10) (MkKnight 10 9 5)
+>>> fightOld (MkMonster 10 10 10) (MkKnight 10 9 5)
 -1
->>> fight (MkMonster 10 10 10) (MkKnight 11 9 5)
+>>> fightOld (MkMonster 10 10 10) (MkKnight 11 9 5)
 5
 -}
 
-data Knight = MkKnight
-  { knightHealth :: Int
-  , knightAttack :: Int
-  , knightGold   :: Int
+data KnightOld = MkKnight
+  { knightoldHealth :: Int
+  , knightoldAttack :: Int
+  , knightoldGold   :: Int
   } deriving (Show)
 
-data Monster = MkMonster
-  { monsterHealth :: Int
-  , monsterAttack :: Int
-  , monsterGold   :: Int
+data MonsterOld = MkMonster
+  { monsteroldHealth :: Int
+  , monsteroldAttack :: Int
+  , monsteroldGold   :: Int
   } deriving (Show)
 
-fight :: Monster -> Knight -> Int
-fight monster knight 
-  | knightAttack knight >= monsterHealth monster = monsterGold monster + knightGold knight
-  | monsterAttack monster >= knightHealth knight = -1
-  | otherwise = knightGold knight
+fightOld :: MonsterOld -> KnightOld -> Int
+fightOld monster knight 
+  | knightoldAttack knight >= monsteroldHealth monster = monsteroldGold monster + knightoldGold knight
+  | monsteroldAttack monster >= knightoldHealth knight = -1
+  | otherwise = knightoldGold knight
 {- |
 =🛡= Sum types
 
@@ -1208,6 +1209,57 @@ Implement data types and typeclasses, describing such a battle between two
 contestants, and write a function that decides the outcome of a fight!
 -}
 
+data Knight = Knight
+  { knightHealth  :: Int
+  , knightAttack  :: Int
+  , knightDefense :: Int
+  , knightAction  :: [KnightAction]
+  } deriving (Show)
+
+data KnightAction = 
+    KnightAttack Int
+  | KnightHeal Int
+  | KnightSpell Int
+  deriving (Show)
+
+data Monster = Monster
+  { monsterHealth :: Int
+  , monsterAttack :: Int
+  , monsterAction :: [MonsterAction]
+  } deriving (Show)
+
+data MonsterAction = 
+    MonsterAttack Int
+  | MonsterRunAway -- heals 1 health
+  deriving (Show)
+
+class Fighter a where
+    action :: (Fighter a, Fighter b) => a -> b -> (a, b)
+    changeHealth :: a -> Int -> a
+    getHealth :: a -> Int
+
+instance Fighter Knight where
+  action ::  (Fighter b) => Knight -> b -> (Knight, b)
+  action (Knight health attack defense (KnightAttack x:acts)) opponent = (Knight health attack defense (acts ++ [KnightAttack x]), changeHealth opponent (-x))
+  action knight opponent = (knight, opponent)
+  changeHealth knight health = knight { knightHealth = (knightHealth knight) + health }
+  getHealth knight = knightHealth knight
+
+instance Fighter Monster where
+  action ::  (Fighter b) => Monster -> b -> (Monster, b)
+  action (Monster health attack (MonsterAttack x:acts)) opponent = (Monster health attack (acts ++ [MonsterAttack x]), changeHealth opponent (-x))
+  action monster opponent = (monster, opponent)
+  changeHealth monster health = monster { monsterHealth = (monsterHealth monster) + health }
+  getHealth monster = monsterHealth monster
+
+fight :: (Fighter a, Fighter b) => a -> b -> (a, b)
+fight a b = if (getHealth b) <= 0
+              then (a, b)
+            else uncurry fight (action a b)
+
+-- fight :: (Fighter a, Fighter b) => a -> b -> (a, b)
+
+-- data 
 
 {-
 You did it! Now it is time to open pull request with your changes
