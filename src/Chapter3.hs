@@ -1,4 +1,3 @@
-{-# LANGUAGE ConstrainedClassMethods #-}
 {- 👋 Welcome to Chapter Three of our journey, Courageous Knight!
 
 Glad to see you back for more challenges. You fought great for the glory of the
@@ -50,9 +49,11 @@ In this module, we enable the "InstanceSigs" feature that allows writing type
 signatures in places where you can't by default. We believe it's helpful to
 provide more top-level type signatures, especially when learning Haskell.
 -}
+{-# LANGUAGE ConstrainedClassMethods #-}
 {-# LANGUAGE InstanceSigs #-}
 
 module Chapter3 where
+import Data.Tuple
 
 {-
 =🛡= Types in Haskell
@@ -1174,7 +1175,7 @@ daysToParty Saturday = 6
 daysToParty Sunday = 5
 daysToParty w = 4 - (fromEnum w)
 
-{-
+{- |
 =💣= Task 9*
 
 You got to the end of Chapter Three, Brave Warrior! I hope you are ready for the
@@ -1207,6 +1208,18 @@ properties using typeclasses, but they are different data types in the end.
 
 Implement data types and typeclasses, describing such a battle between two
 contestants, and write a function that decides the outcome of a fight!
+
+Weak attacking night, but eventually gets his defense stat high enough vs Monster
+
+>>> let a = Knight 10 2 0 [KnightAttack, KnightHeal 0, KnightSpell 1]
+>>> let b = Monster 10 5 [MonsterAttack, MonsterRunAway]
+>>> fight a b
+(Knight {knightHealth = -3, knightAttack = 2, knightDefense = 2, knightAction = [KnightAttack,KnightHeal 0,KnightSpell 1]},Monster {monsterHealth = 8, monsterAttack = 5, monsterAction = [MonsterRunAway,MonsterAttack]})
+>>> let c = Knight 11 3 1 [KnightAttack, KnightSpell 1]
+>>> fight c b
+(Knight {knightHealth = 1, knightAttack = 3, knightDefense = 5, knightAction = [KnightSpell 1,KnightAttack]},Monster {monsterHealth = -1, monsterAttack = 5, monsterAction = [MonsterRunAway,MonsterAttack]})
+>>> fight b b
+(Monster {monsterHealth = -3, monsterAttack = 5, monsterAction = [MonsterRunAway,MonsterAttack]},Monster {monsterHealth = -3, monsterAttack = 5, monsterAction = [MonsterRunAway,MonsterAttack]})
 -}
 
 data Knight = Knight
@@ -1217,7 +1230,7 @@ data Knight = Knight
   } deriving (Show)
 
 data KnightAction = 
-    KnightAttack Int
+    KnightAttack
   | KnightHeal Int
   | KnightSpell Int
   deriving (Show)
@@ -1229,8 +1242,8 @@ data Monster = Monster
   } deriving (Show)
 
 data MonsterAction = 
-    MonsterAttack Int
-  | MonsterRunAway -- heals 1 health
+    MonsterAttack
+  | MonsterRunAway -- Monster runs away to cave to heal one health, but opponent chases after
   deriving (Show)
 
 class Fighter a where
@@ -1240,22 +1253,29 @@ class Fighter a where
 
 instance Fighter Knight where
   action ::  (Fighter b) => Knight -> b -> (Knight, b)
-  action (Knight health attack defense (KnightAttack x:acts)) opponent = (Knight health attack defense (acts ++ [KnightAttack x]), changeHealth opponent (-x))
+  action (Knight health attack defense (KnightAttack:acts)) opponent = (Knight health attack defense (acts ++ [KnightAttack]), changeHealth opponent (-attack))
+  action (Knight health attack defense (KnightHeal x:acts)) opponent = (Knight (health + x) attack defense (acts ++ [KnightHeal x]),opponent)
+  action (Knight health attack defense (KnightSpell x:acts)) opponent = (Knight health attack (defense + x) (acts ++ [KnightSpell x]),opponent)
   action knight opponent = (knight, opponent)
-  changeHealth knight health = knight { knightHealth = (knightHealth knight) + health }
+  changeHealth knight health = 
+    if health >= 0
+      then knight { knightHealth = (knightHealth knight) + health }
+    else knight { knightHealth = (knightHealth knight) + (min 0 (health + (knightDefense knight)))}
   getHealth knight = knightHealth knight
 
 instance Fighter Monster where
   action ::  (Fighter b) => Monster -> b -> (Monster, b)
-  action (Monster health attack (MonsterAttack x:acts)) opponent = (Monster health attack (acts ++ [MonsterAttack x]), changeHealth opponent (-x))
+  action (Monster health attack (MonsterAttack:acts)) opponent = (Monster health attack (acts ++ [MonsterAttack]), changeHealth opponent (-attack))
+  action (Monster health attack (MonsterRunAway:acts)) opponent = (Monster (health + 1) attack (acts ++ [MonsterRunAway]), opponent)
   action monster opponent = (monster, opponent)
   changeHealth monster health = monster { monsterHealth = (monsterHealth monster) + health }
   getHealth monster = monsterHealth monster
 
-fight :: (Fighter a, Fighter b) => a -> b -> (a, b)
+
+fight :: (Fighter a, Fighter b, Show a, Show b) => a -> b -> (a, b)
 fight a b = if (getHealth b) <= 0
               then (a, b)
-            else uncurry fight (action a b)
+            else swap (uncurry fight (swap (action a b)))
 
 -- fight :: (Fighter a, Fighter b) => a -> b -> (a, b)
 
