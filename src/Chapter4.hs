@@ -114,22 +114,30 @@ As always, try to guess the output first! And don't forget to insert
 the output in here:
 
 >>> :k Char
+Char :: *
 
 >>> :k Bool
+Bool :: *
 
 >>> :k [Int]
+[Int] :: *
 
 >>> :k []
+[] :: * -> *
 
 >>> :k (->)
+(->) :: * -> * -> *
 
 >>> :k Either
+Either :: * -> * -> *
 
 >>> data Trinity a b c = MkTrinity a b c
 >>> :k Trinity
+Trinity :: * -> * -> * -> *
 
 >>> data IntBox f = MkIntBox (f Int)
 >>> :k IntBox
+IntBox :: (* -> *) -> *
 
 -}
 
@@ -293,7 +301,8 @@ values and apply them to the type level?
 -}
 instance Functor (Secret e) where
     fmap :: (a -> b) -> Secret e a -> Secret e b
-    fmap = error "fmap for Box: not implemented!"
+    fmap f (Reward a) = Reward (f a)
+    fmap _ (Trap e) = Trap e
 
 {- |
 =⚔️= Task 3
@@ -302,10 +311,19 @@ Implement Functor instance for the "List" type defined below. This
 list type mimics the standard lists in Haskell. But for training
 purposes, let's practise our skills on implementing standard
 typeclasses for standard data types.
+
+>>> fmap length (Cons "Hello" (Cons "World!" Empty))
+Cons 5 (Cons 6 Empty)
+
 -}
 data List a
     = Empty
-    | Cons a (List a)
+    | Cons a (List a) deriving Show
+
+instance Functor List where
+  fmap :: (a -> b) -> List a -> List b
+  fmap _ Empty = Empty
+  fmap f (Cons car cdr) = Cons (f car) (fmap f cdr)
 
 {- |
 =🛡= Applicative
@@ -472,10 +490,12 @@ Implement the Applicative instance for our 'Secret' data type from before.
 -}
 instance Applicative (Secret e) where
     pure :: a -> Secret e a
-    pure = error "pure Secret: Not implemented!"
+    pure = Reward
 
     (<*>) :: Secret e (a -> b) -> Secret e a -> Secret e b
-    (<*>) = error "(<*>) Secret: Not implemented!"
+    Reward f <*> a = fmap f a
+    -- If I delete the one below, then Trap e <*> Trap f = Trap e instead of Trap f
+    Trap e <*> _ = Trap e
 
 {- |
 =⚔️= Task 5
@@ -487,8 +507,21 @@ Implement the 'Applicative' instance for our 'List' type.
   apply each function to each argument and combine all the results. You
   may also need to implement a few useful helper functions for our List
   type.
+
+>>> Cons (+) (Cons (-) Empty) <*> Cons 1 (Cons 2 Empty) <*> Cons 3 (Cons 4 Empty)
+Cons 4 (Cons (-2) Empty)
+>>> Empty <*> Cons 1 Empty
+Empty
 -}
 
+instance Applicative List where
+  pure :: a -> List a
+  pure a = Cons a Empty
+
+  (<*>) :: List (a -> b) -> List a -> List b
+  Cons f cdr <*> Cons a cdr' = Cons (f a) (cdr <*> cdr')
+  Empty <*> _ = Empty
+  _ <*> Empty = Empty
 
 {- |
 =🛡= Monad
@@ -600,7 +633,9 @@ Implement the 'Monad' instance for our 'Secret' type.
 -}
 instance Monad (Secret e) where
     (>>=) :: Secret e a -> (a -> Secret e b) -> Secret e b
-    (>>=) = error "bind Secret: Not implemented!"
+    -- (>>=) = error "bind Secret: Not implemented!"
+    Reward a >>= f = f a
+    Trap   e >>= _ = Trap e
 
 {- |
 =⚔️= Task 7
@@ -609,8 +644,32 @@ Implement the 'Monad' instance for our lists.
 
 🕯 HINT: You probably will need to implement a helper function (or
   maybe a few) to flatten lists of lists to a single list.
+
+>>> Cons 2 (Cons 3 (Cons 4 Empty)) >>= squareCube
+Cons 4 (Cons 8 (Cons 9 (Cons 27 (Cons 16 (Cons 64 Empty)))))
+>>> Cons 1 (Cons 2 (Cons 3 (Cons 4 Empty))) >>= replicate'
+Cons 1 (Cons 2 (Cons 2 (Cons 3 (Cons 3 (Cons 3 (Cons 4 (Cons 4 (Cons 4 (Cons 4 Empty)))))))))
 -}
 
+squareCube :: Int -> List Int
+squareCube x = Cons (x * x) (Cons (x * x * x) Empty)
+
+replicate' :: Int -> List Int
+replicate' = go 0
+  where
+    go :: Int -> Int -> List Int
+    go x y
+      | y < 0 || x == y = Empty
+      | otherwise       = Cons y (go (1 + x) y)
+
+instance Monad List where
+  (>>=) :: List a -> (a -> List b) -> List b
+  Empty >>= _ = Empty
+  Cons car cdr >>= f = append (f car) (cdr >>= f)
+
+append :: List a -> List a -> List a
+append (Cons car cdr) list = Cons car (append cdr list)
+append Empty cdr = cdr
 
 {- |
 =💣= Task 8*: Before the Final Boss
@@ -626,10 +685,24 @@ can implement a function with the type signature described below.
 
 Can you implement a monad version of AND, polymorphic over any monad?
 
-🕯 HINT: Use "(>>=)", "pure" and anonymous function
+� HINT: Use "(>>=)", "pure" and anonymous function
+
+>>> andM [True] [True, False]
+[True,False]
+>>> andM [False] [True, False]
+[False,False]
+>>> andM (Just True) (Just True)
+Just True
+>>> andM (Just True) (Just False)
+Just False
+>>> andM (Just False) (Just True)
+Just False
+>>> andM Nothing (Just True)
+Nothing
 -}
 andM :: (Monad m) => m Bool -> m Bool -> m Bool
-andM = error "andM: Not implemented!"
+-- Unsure how to fix andM (Just False) Nothing `shouldBe` Just False
+andM m1 m2 = (m1 >>= \z -> pure (z &&)) <*> m2
 
 {- |
 =🐉= Task 9*: Final Dungeon Boss
