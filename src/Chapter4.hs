@@ -744,7 +744,34 @@ Specifically,
  ❃ Implement the reverseTree function that reverses the tree and each
    subtree of a tree
  ❃ Implement the function to convert Tree to list
+
+>>> let a = Tree 1 (Tree 2 (Leaf 3) (Leaf 4)) (Leaf 5)
+>>> fmap (\x -> x * x) a
+Tree 1 (Tree 4 (Leaf 9) (Leaf 16)) (Leaf 25)
+>>> fmap show a
+Tree "1" (Tree "2" (Leaf "3") (Leaf "4")) (Leaf "5")
+>>> reverseTree a
+Tree 1 (Leaf 5) (Tree 2 (Leaf 3) (Leaf 4))
+>>> flattenTree a
+Cons 1 (Cons 2 (Cons 3 (Cons 4 (Cons 5 Empty))))
 -}
+
+data Tree a 
+    = Leaf a
+    | Tree a (Tree a) (Tree a) deriving Show
+
+instance Functor Tree where
+  fmap :: (a -> b) -> Tree a -> Tree b
+  fmap f (Leaf a) = Leaf (f a)
+  fmap f (Tree a left right) = Tree (f a) (fmap f left) (fmap f right)
+
+reverseTree :: Tree a -> Tree a
+reverseTree (Leaf a) = Leaf a
+reverseTree (Tree a left right) = Tree a right left
+
+flattenTree :: Tree a -> List a
+flattenTree (Leaf a) = Cons a Empty
+flattenTree (Tree a left right) = Cons a (append (flattenTree left) (flattenTree right))
 
 
 {-
