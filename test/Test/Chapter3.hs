@@ -4,9 +4,6 @@ module Test.Chapter3
 
 import Test.Hspec (Spec, describe, it, shouldBe)
 
-import Chapter3
-
-
 chapter3 :: Spec
 chapter3 = describe "Chapter3" $ do
     describe "Chapter3Normal" $ it "" $ True `shouldBe` True
